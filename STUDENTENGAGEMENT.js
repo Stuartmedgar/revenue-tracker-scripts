@@ -1,5 +1,6 @@
 // ===============================================
-// STUDENTENGAGEMENT.GS - Complete New File (FIXED VERSION)
+// STUDENTENGAGEMENT.GS - Complete Student Engagement with Tuition/Revision Plus Support
+// UPDATED: Added £822 and £522 to engagement criteria
 // ===============================================
 
 const ATX_ENGAGEMENT_SPREADSHEET_ID = "1mhtp-bFZe-mFMKStBXE9ECgGj9T8K-xAZOJ511jpOH8";
@@ -42,18 +43,14 @@ function processStudentForEngagement(studentData, monthlySheetName) {
 function meetsEngagementCriteria(actualPrice) {
   const price = Number(actualPrice);
 
+  // UPDATED: Added 822 and 522 for Tuition/Revision Plus
   // Full course payments
-  if (price === 997 || price === 647 || price === 597) {
+  if (price === 997 || price === 822 || price === 647 || price === 597) {
     return true;
   }
 
   // First instalment payments
-  if (price === 397 || price === 347 || price === 297) {
-    return true;
-  }
-
-  // Fast Track course payments
-  if (price === 822 || price === 522) {
+  if (price === 522 || price === 397 || price === 347 || price === 297) {
     return true;
   }
 
@@ -68,6 +65,11 @@ function getCourseTypeFromPrice(actualPrice) {
     return 'Platinum';
   }
 
+  // UPDATED: Tuition/Revision Plus (822 full, 522 first instalment)
+  if (price === 822 || price === 522) {
+    return 'Tuition/Revision Plus';
+  }
+
   // Revision (647 full, 347 first instalment)
   if (price === 647 || price === 347) {
     return 'Revision';
@@ -76,11 +78,6 @@ function getCourseTypeFromPrice(actualPrice) {
   // Tuition (597 full, 297 first instalment)
   if (price === 597 || price === 297) {
     return 'Tuition';
-  }
-
-  // Fast Track (822 full, 522 first instalment)
-  if (price === 822 || price === 522) {
-    return 'Fast Track';
   }
 
   return '';
@@ -124,7 +121,6 @@ function normalizeSittingName(sitting) {
 
   // Final format check - should be "Month YYYY"
   const formatMatch = normalized.match(/^([A-Z][a-z]+)\s+(\d{4})$/);
-
   if (!formatMatch) {
     Logger.log(`Warning: Could not parse sitting format: "${sittingStr}" -> "${normalized}"`);
     return null;
@@ -156,7 +152,7 @@ function transferStudentToEngagement(studentName, courseType, targetSheetName) {
 
     // INSERT a new row at the correct position (this pushes Deferrals down)
     targetSheet.insertRowBefore(insertRow);
-    
+
     // Add student name to column B of the newly inserted row
     targetSheet.getRange(insertRow, 2).setValue(studentName);
 
@@ -183,57 +179,56 @@ function checkForDuplicate(sheet, studentName) {
 
   // Check column B (names) from row 9 onwards, but stop at Deferrals section
   const columnBData = sheet.getRange(9, 2, lastRow - 8, 1).getValues();
-  
+
   for (let i = 0; i < columnBData.length; i++) {
     const cellValue = columnBData[i][0];
-    
+
     // Stop checking when we hit the Deferrals section
     if (cellValue && cellValue.toString().toLowerCase().includes('deferral')) {
       break;
     }
-    
+
     // Check for duplicate student name
     if (cellValue === studentName) {
       return true;
     }
   }
-  
+
   return false;
 }
 
 function findFirstAvailableRow(sheet) {
   const lastRow = sheet.getLastRow();
-  
+
   // Start checking from row 9 (first data row after headers in row 8)
   let searchStartRow = Math.max(9, 1);
-  
+
   // Get all data in column B (names) to analyze the sheet structure
   const columnBData = sheet.getRange(searchStartRow, 2, lastRow - searchStartRow + 1, 1).getValues();
-  
+
   // Find the last student row before any "Deferrals" section
   let lastStudentRow = searchStartRow - 1; // Start before first data row
-  
+
   for (let i = 0; i < columnBData.length; i++) {
     const rowIndex = searchStartRow + i;
     const cellValue = columnBData[i][0];
-    
+
     // If we hit "Deferrals" heading, stop looking - we found where students should end
     if (cellValue && cellValue.toString().toLowerCase().includes('deferral')) {
       Logger.log(`Found "Deferrals" section at row ${rowIndex}, students should be added before this`);
       break;
     }
-    
+
     // If this row has a student name (non-empty), update last student row
     if (cellValue && cellValue.toString().trim() !== '') {
       lastStudentRow = rowIndex;
     }
   }
-  
+
   // The next available row is right after the last student
   const nextAvailableRow = lastStudentRow + 1;
-  
+
   Logger.log(`Last student found at row ${lastStudentRow}, inserting new student at row ${nextAvailableRow}`);
-  
   return nextAvailableRow;
 }
 
@@ -336,8 +331,8 @@ function testEngagementTransfer() {
     Logger.log(`"${sitting}" -> "${normalized}"`);
   });
 
-  // Test criteria
-  const testPrices = [997, 647, 597, 397, 347, 297, 300, 500];
+  // UPDATED: Test criteria with new prices
+  const testPrices = [997, 822, 647, 597, 522, 397, 347, 297, 300, 500];
   testPrices.forEach(price => {
     const meets = meetsEngagementCriteria(price);
     const course = getCourseTypeFromPrice(price);
@@ -368,57 +363,57 @@ function debugEngagementSheets() {
 
 function testRowPlacement() {
   Logger.log('=== TESTING IMPROVED ROW PLACEMENT ===');
-  
+
   try {
     const engagementSS = SpreadsheetApp.openById(ATX_ENGAGEMENT_SPREADSHEET_ID);
     const testSheet = engagementSS.getSheetByName('December 2025');
-    
+
     if (!testSheet) {
       Logger.log('December 2025 sheet not found for testing');
       return;
     }
-    
+
     Logger.log('🔍 Analyzing December 2025 sheet structure:');
-    
+
     // Get all data in column B to see the structure
     const lastRow = testSheet.getLastRow();
     const columnBData = testSheet.getRange(1, 2, lastRow, 1).getValues();
-    
+
     let foundDeferrals = false;
     let deferralsRow = -1;
     let lastStudentRow = -1;
-    
+
     for (let i = 0; i < columnBData.length; i++) {
       const rowIndex = i + 1;
       const cellValue = columnBData[i][0];
-      
+
       if (cellValue) {
         Logger.log(`Row ${rowIndex}: "${cellValue}"`);
-        
+
         if (cellValue.toString().toLowerCase().includes('deferral')) {
           foundDeferrals = true;
           deferralsRow = rowIndex;
-          Logger.log(`   ^^^ DEFERRALS SECTION FOUND`);
+          Logger.log(`  ^^^ DEFERRALS SECTION FOUND`);
         } else if (rowIndex >= 9 && !foundDeferrals) {
           // This looks like a student name
           lastStudentRow = rowIndex;
         }
       }
     }
-    
+
     Logger.log(`\n📊 Analysis Results:`);
     Logger.log(`Last student row: ${lastStudentRow}`);
     Logger.log(`Deferrals section at: ${foundDeferrals ? deferralsRow : 'Not found'}`);
-    
+
     const nextRow = findFirstAvailableRow(testSheet);
     Logger.log(`Next student should be inserted at row: ${nextRow}`);
-    
+
     if (foundDeferrals && nextRow >= deferralsRow) {
       Logger.log('❌ WARNING: New student would be placed after Deferrals - this is the problem!');
     } else {
       Logger.log('✅ New student will be placed correctly before Deferrals section');
     }
-    
+
   } catch (error) {
     Logger.log(`Error testing row placement: ${error.toString()}`);
   }
@@ -426,55 +421,54 @@ function testRowPlacement() {
 
 function testImprovedTransfer() {
   Logger.log('=== TESTING IMPROVED TRANSFER PLACEMENT ===');
-  
+
   const testStudent = {
     name: 'Test Student - Row Placement Fix',
-    sitting: 'December 2025', 
+    sitting: 'December 2025',
     actualPrice: 397,
     course: 'Platinum'
   };
-  
+
   Logger.log(`Testing with: ${testStudent.name}`);
   Logger.log('This should be placed BEFORE the Deferrals section');
-  
+
   processStudentForEngagement(testStudent, 'Test Sheet');
-  
+
   Logger.log('✅ Test complete - check the December 2025 sheet to see if placement is correct');
 }
 
 function transferAllEligibleStudentsToEngagement() {
   Logger.log('=== TRANSFERRING ALL ELIGIBLE STUDENTS TO ENGAGEMENT ===');
-  Logger.log('⚠️  This will attempt to transfer ALL eligible students from monthly sheets');
-  
+  Logger.log('⚠️ This will attempt to transfer ALL eligible students from monthly sheets');
+
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const allSheets = ss.getSheets();
-  
   const monthlySheets = allSheets.filter(sheet => isMonthlySheetName(sheet.getName()));
-  
+
   let totalTransferred = 0;
-  
+
   monthlySheets.forEach(sheet => {
     const sheetName = sheet.getName();
     Logger.log(`\n📋 Processing ${sheetName}...`);
-    
+
     const dataRange = sheet.getDataRange();
     if (dataRange.getNumRows() <= 1) return;
-    
+
     const allData = dataRange.getValues();
     const headers = allData[0];
     const dataRows = allData.slice(1);
-    
+
     const nameCol = headers.indexOf('Name');
     const sittingCol = headers.indexOf('Sitting');
     const actualPriceCol = headers.indexOf('Actual Price');
-    
+
     if (nameCol === -1 || sittingCol === -1 || actualPriceCol === -1) return;
-    
+
     dataRows.forEach((row, index) => {
       const name = row[nameCol];
       const sitting = row[sittingCol];
       const actualPrice = row[actualPriceCol];
-      
+
       if (name && sitting && actualPrice && meetsEngagementCriteria(actualPrice)) {
         const studentData = {
           name: name,
@@ -482,13 +476,13 @@ function transferAllEligibleStudentsToEngagement() {
           actualPrice: actualPrice,
           course: getCourseTypeFromPrice(actualPrice)
         };
-        
+
         Logger.log(`  🎓 Transferring: ${name} (£${actualPrice})`);
         processStudentForEngagement(studentData, sheetName);
         totalTransferred++;
       }
     });
   });
-  
+
   Logger.log(`\n✅ COMPLETE: Attempted to transfer ${totalTransferred} students to engagement spreadsheet`);
 }

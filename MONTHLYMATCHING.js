@@ -459,6 +459,11 @@ function setupSeptember2025() {
   setupMonthlyMatching('September', 2025);
 }
 
+function setupOctober2025() {
+  setupMonthlyMatching('October', 2025);
+}
+
+
 // Convenient wrapper functions for updating existing sheets
 function updateJuly2025WithNameAmountMatching() {
   updateExistingMonthlySheetFormulas('July', 2025);

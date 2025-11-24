@@ -1,5 +1,6 @@
 // ===============================================
 // DATAPROCESSOR.GS - Data Processing Logic (Complete with Student Engagement and Fixed Date Ordering)
+// UPDATED: Added Tuition/Revision Plus (822) support
 // ===============================================
 
 function processDataEntries() {
@@ -14,7 +15,6 @@ function processDataEntries() {
 
     // Get all data from Data Entry sheet (excluding header)
     const dataRange = dataEntrySheet.getDataRange();
-
     if (dataRange.getNumRows() <= 1) {
       Logger.log('No data to process');
       return;
@@ -55,7 +55,6 @@ function processDataEntriesTestMode() {
 
     // Get all data from Data Entry sheet (excluding header)
     const dataRange = dataEntrySheet.getDataRange();
-
     if (dataRange.getNumRows() <= 1) {
       Logger.log('No data to process');
       return;
@@ -89,7 +88,6 @@ function processDataEntriesTestMode() {
 function trackDataEntryTimes(ss, dataRows) {
   // Get or create a hidden sheet to track entry times
   let trackingSheet = ss.getSheetByName('_DataEntryTimes');
-
   if (!trackingSheet) {
     trackingSheet = ss.insertSheet('_DataEntryTimes');
     trackingSheet.hideSheet();
@@ -216,7 +214,6 @@ function cleanupTrackingEntry(ss, row) {
         break;
       }
     }
-
   } catch (error) {
     Logger.log('Error cleaning up tracking entry: ' + error.toString());
   }
@@ -233,14 +230,14 @@ function meetsMonthlySheetConditions(date, name, fullPrice, actualPrice) {
     return false;
   }
 
-  // Check if fullPrice is 997, 647, or 597
-  const validFullPrices = [997, 647, 597];
+  // UPDATED: Check if fullPrice is 997, 822, 647, or 597
+  const validFullPrices = [997, 822, 647, 597];
   if (!validFullPrices.includes(Number(fullPrice))) {
     return false;
   }
 
-  // Check if actualPrice is 997, 647, 597, 397, 347, 300, or 297
-  const validActualPrices = [997, 647, 597, 397, 347, 300, 297];
+  // UPDATED: Check if actualPrice is 997, 822, 647, 597, 522, 397, 347, 300, or 297
+  const validActualPrices = [997, 822, 647, 597, 522, 397, 347, 300, 297];
   if (!validActualPrices.includes(Number(actualPrice))) {
     return false;
   }
@@ -250,7 +247,6 @@ function meetsMonthlySheetConditions(date, name, fullPrice, actualPrice) {
 
 function moveToFailedOrders(ss, row) {
   let failedSheet = ss.getSheetByName('Failed orders');
-
   if (!failedSheet) {
     failedSheet = createFailedOrdersSheet(ss);
   }
@@ -304,13 +300,13 @@ function moveToMonthlySheet(ss, row) {
   // Process for student engagement transfer
   const studentData = {
     name: row[1], // Name column
-    sitting: row[3], // Sitting column  
+    sitting: row[3], // Sitting column
     actualPrice: row[5], // Actual Price column
     course: paymentInfo.course
   };
 
   Logger.log(`🎓 Attempting engagement transfer for ${studentData.name} - Price: £${studentData.actualPrice}`);
-  
+
   // Call the engagement transfer function
   processStudentForEngagement(studentData, sheetName);
 
@@ -326,7 +322,6 @@ function moveToMonthlySheet(ss, row) {
 
 function moveToSortingSheet(ss, row) {
   let sortingSheet = ss.getSheetByName('Sort');
-
   if (!sortingSheet) {
     sortingSheet = createSortingSheet(ss);
   }
@@ -347,10 +342,8 @@ function addCheckboxesToSortingRow(sheet, rowNumber) {
     const checkboxRange = sheet.getRange(rowNumber, 8, 1, 3); // Columns H, I, J
     checkboxRange.insertCheckboxes();
     Logger.log(`Added checkboxes to row ${rowNumber} in Sort sheet using insertCheckboxes()`);
-
   } catch (error1) {
     Logger.log('insertCheckboxes() failed for Sort sheet: ' + error1.toString());
-
     try {
       // Try data validation method
       for (let col = 8; col <= 10; col++) {
@@ -362,7 +355,6 @@ function addCheckboxesToSortingRow(sheet, rowNumber) {
         cell.setValue(false);
       }
       Logger.log(`Added checkboxes to row ${rowNumber} using data validation`);
-
     } catch (error2) {
       Logger.log('Data validation failed for Sort sheet: ' + error2.toString());
       // Fallback to boolean values
