@@ -1,6 +1,7 @@
 // ===============================================
 // INSTALMENTTRACKER.GS - Instalment Tracking System
 // UPDATED: Added Tuition/Revision Plus (822/522/300) support
+// FIXED: Now searches for earlier payments when £300 is received
 // ===============================================
 
 function createInstalmentTrackerSheet(ss) {
@@ -40,8 +41,32 @@ function processInstalmentPayment(studentName, course, fullPrice, actualPrice, p
     // Update existing record
     updateStudentRecord(trackerSheet, existingRowIndex, actualPrice, paymentDate);
   } else {
-    // Create new record
-    createStudentRecord(trackerSheet, studentName, course, fullPrice, actualPrice, paymentDate);
+    // IMPORTANT FIX: If this is a £300 payment, they MUST have earlier payments
+    // (otherwise they wouldn't be in the monthly sheets at all)
+    const actual = Number(actualPrice);
+    
+    if (actual === 300) {
+      Logger.log(`⚠️ Received £300 payment for ${studentName} with no existing tracker record`);
+      Logger.log(`   This student MUST have earlier payments - searching all monthly sheets...`);
+      
+      // Search for ALL payments for this student
+      const allPayments = searchForAllStudentPayments(ss, studentName, course, fullPrice);
+      
+      if (allPayments.length > 0) {
+        Logger.log(`   ✅ Found ${allPayments.length} total payment(s) for this student`);
+        Logger.log(`   Creating complete record with full payment history...`);
+        
+        // Create record with all payments
+        createStudentRecordWithAllPayments(trackerSheet, studentName, course, fullPrice, allPayments);
+      } else {
+        Logger.log(`   ❌ ERROR: No payments found - this should never happen!`);
+        Logger.log(`   Creating record anyway but this needs investigation`);
+        createStudentRecord(trackerSheet, studentName, course, fullPrice, actualPrice, paymentDate);
+      }
+    } else {
+      // Normal case: first payment (397/347/297/522) or full payment
+      createStudentRecord(trackerSheet, studentName, course, fullPrice, actualPrice, paymentDate);
+    }
   }
 }
 
@@ -120,30 +145,35 @@ function getInstalmentCount(actualPrice, fullPrice) {
   const actual = Number(actualPrice);
   const full = Number(fullPrice);
 
+  // If actual equals full, it's a single full payment
+  if (actual === full) {
+    return 1;
+  }
+
   // Determine instalment number based on price patterns
 
   // Platinum (997)
   if (full === 997) {
     if (actual === 397) return 1;
-    if (actual === 300) return 2; // We'll update this to correct number when we update existing records
+    if (actual === 300) return 1; // Will be corrected by searchForAllStudentPayments
   } 
   
   // UPDATED: Tuition/Revision Plus (822)
   else if (full === 822) {
     if (actual === 522) return 1;
-    if (actual === 300) return 2;
+    if (actual === 300) return 1; // Will be corrected by searchForAllStudentPayments
   } 
   
   // Revision (647)
   else if (full === 647) {
     if (actual === 347) return 1;
-    if (actual === 300) return 2;
+    if (actual === 300) return 1; // Will be corrected by searchForAllStudentPayments
   } 
   
   // Tuition (597)
   else if (full === 597) {
     if (actual === 297) return 1;
-    if (actual === 300) return 2;
+    if (actual === 300) return 1; // Will be corrected by searchForAllStudentPayments
   }
 
   return 1; // Default to first instalment
@@ -153,6 +183,78 @@ function calculateNextPaymentDate(lastPaymentDate) {
   const nextDate = new Date(lastPaymentDate);
   nextDate.setMonth(nextDate.getMonth() + 1); // Add 1 month
   return nextDate;
+}
+
+// NEW FUNCTION: Search monthly sheets for ALL payments for this student
+function searchForAllStudentPayments(ss, studentName, course, fullPrice) {
+  const allSheets = ss.getSheets();
+  const monthlySheets = allSheets.filter(sheet => isMonthlySheetName(sheet.getName()));
+  
+  const allPayments = [];
+  
+  monthlySheets.forEach(sheet => {
+    const sheetData = sheet.getDataRange().getValues();
+    const sheetHeaders = sheetData[0];
+    const sheetRows = sheetData.slice(1);
+    
+    const nameCol = sheetHeaders.indexOf('Name');
+    const fullPriceCol = sheetHeaders.indexOf('Full Price');
+    const actualPriceCol = sheetHeaders.indexOf('Actual Price');
+    const dateCol = sheetHeaders.indexOf('Date');
+    
+    if (nameCol === -1 || actualPriceCol === -1) return;
+    
+    sheetRows.forEach(row => {
+      // Match by name and full price
+      if (row[nameCol] === studentName && Number(row[fullPriceCol]) === Number(fullPrice)) {
+        allPayments.push({
+          amount: Number(row[actualPriceCol]),
+          date: new Date(row[dateCol]),
+          sheetName: sheet.getName()
+        });
+      }
+    });
+  });
+  
+  // Sort by date (oldest first)
+  allPayments.sort((a, b) => a.date - b.date);
+  
+  return allPayments;
+}
+
+// NEW FUNCTION: Create student record with ALL payments found
+function createStudentRecordWithAllPayments(sheet, studentName, course, fullPrice, allPayments) {
+  // Calculate totals from all payments
+  const totalPaid = allPayments.reduce((sum, p) => sum + p.amount, 0);
+  const instalmentCount = allPayments.length;
+  
+  // Get the last payment date (most recent)
+  const lastPaymentDate = allPayments[allPayments.length - 1].date;
+  
+  const isComplete = totalPaid >= Number(fullPrice);
+  const nextPaymentDue = isComplete ? '' : calculateNextPaymentDate(lastPaymentDate);
+  const completionStatus = isComplete ? 'Complete' : 'In Progress';
+  const completionDate = isComplete ? new Date() : '';
+  
+  const newRecord = [
+    studentName,
+    course,
+    Number(fullPrice),
+    totalPaid,
+    instalmentCount,
+    lastPaymentDate,
+    nextPaymentDue,
+    completionStatus,
+    completionDate
+  ];
+  
+  const lastRow = sheet.getLastRow();
+  sheet.getRange(lastRow + 1, 1, 1, newRecord.length).setValues([newRecord]);
+  
+  Logger.log(`✅ Created complete instalment record: ${studentName} - ${course}`);
+  Logger.log(`   Found payment history: ${allPayments.map(p => `£${p.amount}`).join(', ')}`);
+  Logger.log(`   Total: £${totalPaid} (${instalmentCount} instalments)`);
+  Logger.log(`   Status: ${completionStatus}`);
 }
 
 function cleanupCompletedPayments() {
