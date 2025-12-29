@@ -1,5 +1,6 @@
 // ===============================================
 // DATAPROCESSOR.GS - Data Processing Logic (Complete with Student Engagement and Fixed Date Ordering)
+// UPDATED: Platinum course now £1047 (was £997) with £397, £350, £300 installments
 // UPDATED: Added Tuition/Revision Plus (822) support
 // ===============================================
 
@@ -230,14 +231,14 @@ function meetsMonthlySheetConditions(date, name, fullPrice, actualPrice) {
     return false;
   }
 
-  // UPDATED: Check if fullPrice is 997, 822, 647, or 597
-  const validFullPrices = [997, 822, 647, 597];
+  // UPDATED: Check if fullPrice is 1047, 822, 647, or 597
+  const validFullPrices = [1047, 822, 647, 597];
   if (!validFullPrices.includes(Number(fullPrice))) {
     return false;
   }
 
-  // UPDATED: Check if actualPrice is 997, 822, 647, 597, 522, 397, 347, 300, or 297
-  const validActualPrices = [997, 822, 647, 597, 522, 397, 347, 300, 297];
+  // UPDATED: Check if actualPrice is valid - added 1047 and 350
+  const validActualPrices = [1047, 822, 647, 597, 522, 397, 350, 347, 300, 297];
   if (!validActualPrices.includes(Number(actualPrice))) {
     return false;
   }

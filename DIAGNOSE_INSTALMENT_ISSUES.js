@@ -1,5 +1,6 @@
 // ===============================================
 // DIAGNOSE INSTALMENT TRACKER ISSUES
+// UPDATED: Platinum course now £1047 (was £997) with £397, £350, £300 installments
 // ===============================================
 
 function diagnoseInstalmentTrackerIssues() {
@@ -44,9 +45,9 @@ function diagnoseInstalmentTrackerIssues() {
       problems: []
     };
     
-    // Check 1: First payment detection issue (300 as instalment 1)
-    if (amountPaid === 300 && instalmentsPaid === 1) {
-      issue.problems.push('❌ CRITICAL: Shows £300 as instalment 1 (should be 2 or 3)');
+    // Check 1: First payment detection issue (300 or 350 as instalment 1)
+    if ((amountPaid === 300 || amountPaid === 350) && instalmentsPaid === 1) {
+      issue.problems.push(`❌ CRITICAL: Shows £${amountPaid} as instalment 1 (should be 2 or 3)`);
       issue.problems.push(`   Expected first payment: £${getExpectedFirstPayment(fullPrice)}`);
       issue.problems.push('   → Student likely has missing first payment');
     }
@@ -94,7 +95,8 @@ function diagnoseInstalmentTrackerIssues() {
 
 function getExpectedFirstPayment(fullPrice) {
   switch (Number(fullPrice)) {
-    case 997: return 397; // Platinum
+    case 1047: return 397; // UPDATED: Platinum
+    case 822: return 522; // Tuition/Revision Plus
     case 647: return 347; // Revision
     case 597: return 297; // Tuition
     default: return '?';
@@ -105,11 +107,17 @@ function getExpectedMinimumForInstalments(fullPrice, instalmentCount) {
   const full = Number(fullPrice);
   const count = Number(instalmentCount);
   
-  // Platinum (997): 397 + 300 + 300
-  if (full === 997) {
+  // UPDATED: Platinum (1047): 397 + 350 + 300
+  if (full === 1047) {
     if (count === 1) return 397;
-    if (count === 2) return 697;
-    if (count === 3) return 997;
+    if (count === 2) return 747; // 397 + 350
+    if (count === 3) return 1047; // 397 + 350 + 300
+  }
+  
+  // Tuition/Revision Plus (822): 522 + 300
+  if (full === 822) {
+    if (count === 1) return 522;
+    if (count === 2) return 822;
   }
   
   // Revision (647): 347 + 300
@@ -139,7 +147,7 @@ function searchMonthlySheetsMissingPayments() {
     return;
   }
   
-  // Get all students with 300 as first payment issue
+  // Get all students with 300 or 350 as first payment issue
   const dataRange = trackerSheet.getDataRange();
   const allData = dataRange.getValues();
   const dataRows = allData.slice(1);
@@ -152,7 +160,7 @@ function searchMonthlySheetsMissingPayments() {
     const instalmentsPaid = Number(row[4]);
     const fullPrice = Number(row[2]);
     
-    if (studentName && amountPaid === 300 && instalmentsPaid === 1) {
+    if (studentName && (amountPaid === 300 || amountPaid === 350) && instalmentsPaid === 1) {
       problematicStudents.push({
         name: studentName,
         fullPrice: fullPrice,
@@ -174,7 +182,7 @@ function searchMonthlySheetsMissingPayments() {
     Logger.log(`\n${'='.repeat(80)}`);
     Logger.log(`🔍 Searching for: ${student.name}`);
     Logger.log(`   Expected first payment: £${student.expectedFirstPayment}`);
-    Logger.log(`   Current tracker shows: £300 (instalment 1) ← INCORRECT`);
+    Logger.log(`   Current tracker shows: £${student.amountPaid || 300} (instalment 1) ← INCORRECT`);
     
     let foundPayments = [];
     
@@ -222,7 +230,7 @@ function searchMonthlySheetsMissingPayments() {
       if (hasFirstPayment) {
         Logger.log('\n   ✅ SOLUTION: First payment EXISTS in monthly sheets');
         Logger.log(`   → Need to UPDATE Instalment Tracker row ${student.rowNumber}`);
-        Logger.log(`   → Set Amount Paid from £300 to correct total`);
+        Logger.log(`   → Set Amount Paid from £${student.amountPaid || 300} to correct total`);
         Logger.log(`   → Set Instalments from 1 to correct number`);
       } else {
         Logger.log('\n   ❌ PROBLEM: First payment (£' + student.expectedFirstPayment + ') NOT FOUND');
@@ -270,10 +278,10 @@ function fixInstalmentTrackerDataImproved() {
     
     if (!studentName) return;
     
-    // ONLY FIX: Students showing £300 as instalment 1
-    if (amountPaid === 300 && instalmentsPaid === 1) {
+    // ONLY FIX: Students showing £300 or £350 as instalment 1
+    if ((amountPaid === 300 || amountPaid === 350) && instalmentsPaid === 1) {
       Logger.log(`\n🔧 Fixing: ${studentName} (Row ${rowNumber})`);
-      Logger.log(`   Current: £300 shown as instalment 1`);
+      Logger.log(`   Current: £${amountPaid} shown as instalment 1`);
       Logger.log(`   Expected first payment: £${getExpectedFirstPayment(fullPrice)}`);
       
       // Search for all payments in monthly sheets
@@ -366,6 +374,6 @@ function fixInstalmentTrackerDataImproved() {
   if (fixedCount > 0) {
     Logger.log('\n💡 NEXT STEPS:');
     Logger.log('1. Check your Instalment Tracker sheet to verify the updates');
-    Logger.log('2. Investigate Gabriella George separately (missing first payment)');
+    Logger.log('2. Investigate any remaining issues separately');
   }
 }

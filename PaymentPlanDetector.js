@@ -1,5 +1,6 @@
 // ===============================================
 // PAYMENTPLANDETECTOR.GS - Payment Plan Detection Logic
+// UPDATED: Platinum course now £1047 (was £997) with £397, £350, £300 installments
 // UPDATED: Added Tuition/Revision Plus (822) support
 // ===============================================
 
@@ -7,18 +8,20 @@ function detectPaymentPlan(fullPrice, actualPrice) {
   const full = Number(fullPrice);
   const actual = Number(actualPrice);
 
-  // Platinum Course (997)
-  if (full === 997) {
-    if (actual === 997) {
+  // Platinum Course (1047) - UPDATED
+  if (full === 1047) {
+    if (actual === 1047) {
       return { isPaymentPlan: false, instalment: '', course: 'Platinum' };
     } else if (actual === 397) {
       return { isPaymentPlan: true, instalment: '1 of 3', course: 'Platinum' };
+    } else if (actual === 350) {
+      return { isPaymentPlan: true, instalment: '2 of 3', course: 'Platinum' };
     } else if (actual === 300) {
-      return { isPaymentPlan: true, instalment: '2 or 3 of 3', course: 'Platinum' };
+      return { isPaymentPlan: true, instalment: '3 of 3', course: 'Platinum' };
     }
   }
 
-  // Tuition/Revision Plus Course (822) - NEW
+  // Tuition/Revision Plus Course (822)
   if (full === 822) {
     if (actual === 822) {
       return { isPaymentPlan: false, instalment: '', course: 'Tuition/Revision Plus' };
@@ -128,14 +131,15 @@ function getPaymentPlanInfo(fullPrice, actualPrice) {
 function testPaymentPlanDetection() {
   Logger.log('=== Testing Payment Plan Detection ===');
 
-  // Test cases including new Tuition/Revision Plus
+  // Test cases including new Platinum pricing
   const testCases = [
-    { full: 997, actual: 997, expected: 'Full payment' },
-    { full: 997, actual: 397, expected: 'Instalment 1 of 3' },
-    { full: 997, actual: 300, expected: 'Instalment 2 or 3 of 3' },
-    { full: 822, actual: 822, expected: 'Full payment - NEW' },
-    { full: 822, actual: 522, expected: 'Instalment 1 of 2 - NEW' },
-    { full: 822, actual: 300, expected: 'Instalment 2 of 2 - NEW' },
+    { full: 1047, actual: 1047, expected: 'Full payment - UPDATED' },
+    { full: 1047, actual: 397, expected: 'Instalment 1 of 3 - UPDATED' },
+    { full: 1047, actual: 350, expected: 'Instalment 2 of 3 - NEW' },
+    { full: 1047, actual: 300, expected: 'Instalment 3 of 3 - UPDATED' },
+    { full: 822, actual: 822, expected: 'Full payment' },
+    { full: 822, actual: 522, expected: 'Instalment 1 of 2' },
+    { full: 822, actual: 300, expected: 'Instalment 2 of 2' },
     { full: 647, actual: 647, expected: 'Full payment' },
     { full: 647, actual: 347, expected: 'Instalment 1 of 2' },
     { full: 647, actual: 300, expected: 'Instalment 2 of 2' },

@@ -1,5 +1,6 @@
 // ===============================================
 // STUDENTENGAGEMENT.GS - Complete Student Engagement with Tuition/Revision Plus Support
+// UPDATED: Platinum course now £1047 (was £997) with £397, £350, £300 installments
 // UPDATED: Added £822 and £522 to engagement criteria
 // ===============================================
 
@@ -43,14 +44,13 @@ function processStudentForEngagement(studentData, monthlySheetName) {
 function meetsEngagementCriteria(actualPrice) {
   const price = Number(actualPrice);
 
-  // UPDATED: Added 822 and 522 for Tuition/Revision Plus
-  // Full course payments
-  if (price === 997 || price === 822 || price === 647 || price === 597) {
+  // UPDATED: Full course payments - changed 997 to 1047
+  if (price === 1047 || price === 822 || price === 647 || price === 597) {
     return true;
   }
 
-  // First instalment payments
-  if (price === 522 || price === 397 || price === 347 || price === 297) {
+  // UPDATED: First instalment payments - added 350 for Platinum 2nd installment
+  if (price === 522 || price === 397 || price === 350 || price === 347 || price === 297) {
     return true;
   }
 
@@ -60,12 +60,12 @@ function meetsEngagementCriteria(actualPrice) {
 function getCourseTypeFromPrice(actualPrice) {
   const price = Number(actualPrice);
 
-  // Platinum (997 full, 397 first instalment)
-  if (price === 997 || price === 397) {
+  // UPDATED: Platinum (1047 full, 397/350 installments)
+  if (price === 1047 || price === 397 || price === 350) {
     return 'Platinum';
   }
 
-  // UPDATED: Tuition/Revision Plus (822 full, 522 first instalment)
+  // Tuition/Revision Plus (822 full, 522 first instalment)
   if (price === 822 || price === 522) {
     return 'Tuition/Revision Plus';
   }
@@ -331,8 +331,8 @@ function testEngagementTransfer() {
     Logger.log(`"${sitting}" -> "${normalized}"`);
   });
 
-  // UPDATED: Test criteria with new prices
-  const testPrices = [997, 822, 647, 597, 522, 397, 347, 297, 300, 500];
+  // UPDATED: Test criteria with new Platinum prices
+  const testPrices = [1047, 822, 647, 597, 522, 397, 350, 347, 297, 300, 500];
   testPrices.forEach(price => {
     const meets = meetsEngagementCriteria(price);
     const course = getCourseTypeFromPrice(price);

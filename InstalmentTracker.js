@@ -1,7 +1,8 @@
 // ===============================================
 // INSTALMENTTRACKER.GS - Instalment Tracking System
+// UPDATED: Platinum course now £1047 (was £997) with £397, £350, £300 installments
 // UPDATED: Added Tuition/Revision Plus (822/522/300) support
-// FIXED: Now searches for earlier payments when £300 is received
+// FIXED: Now searches for earlier payments when £300 or £350 is received
 // ===============================================
 
 function createInstalmentTrackerSheet(ss) {
@@ -41,12 +42,12 @@ function processInstalmentPayment(studentName, course, fullPrice, actualPrice, p
     // Update existing record
     updateStudentRecord(trackerSheet, existingRowIndex, actualPrice, paymentDate);
   } else {
-    // IMPORTANT FIX: If this is a £300 payment, they MUST have earlier payments
+    // IMPORTANT FIX: If this is a £300 or £350 payment, they MUST have earlier payments
     // (otherwise they wouldn't be in the monthly sheets at all)
     const actual = Number(actualPrice);
     
-    if (actual === 300) {
-      Logger.log(`⚠️ Received £300 payment for ${studentName} with no existing tracker record`);
+    if (actual === 300 || actual === 350) {
+      Logger.log(`⚠️ Received £${actual} payment for ${studentName} with no existing tracker record`);
       Logger.log(`   This student MUST have earlier payments - searching all monthly sheets...`);
       
       // Search for ALL payments for this student
@@ -152,13 +153,14 @@ function getInstalmentCount(actualPrice, fullPrice) {
 
   // Determine instalment number based on price patterns
 
-  // Platinum (997)
-  if (full === 997) {
+  // UPDATED: Platinum (1047)
+  if (full === 1047) {
     if (actual === 397) return 1;
+    if (actual === 350) return 1; // Will be corrected by searchForAllStudentPayments
     if (actual === 300) return 1; // Will be corrected by searchForAllStudentPayments
   } 
   
-  // UPDATED: Tuition/Revision Plus (822)
+  // Tuition/Revision Plus (822)
   else if (full === 822) {
     if (actual === 522) return 1;
     if (actual === 300) return 1; // Will be corrected by searchForAllStudentPayments
