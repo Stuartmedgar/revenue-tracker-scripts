@@ -284,15 +284,15 @@ function moveToMonthlySheet(ss, row) {
   const expectedIncome = calculateExpectedIncome(row[5], fmeFee, stripeFee);
 
   const completeRow = [
-    ...rowWithCourse,
-    fmeFee,
-    stripeFee,
-    '', // Actual Stripe Fee (empty)
-    expectedIncome,
-    paymentInfo.isPaymentPlan ? 'Y' : '', // Payment Plan
-    paymentInfo.instalment, // Instalment
-    '' // Comment (empty)
-  ];
+  ...rowWithCourse.slice(0, 7),  // <-- FIX: Only take first 7 columns
+  fmeFee,
+  stripeFee,
+  '', // Actual Stripe Fee (empty)
+  expectedIncome,
+  paymentInfo.isPaymentPlan ? 'Y' : '', // Payment Plan
+  paymentInfo.instalment, // Instalment
+  '' // Comment (empty)
+];
 
   // FIXED: Add to END of sheet instead of row 2 (oldest first, newest last)
   const lastRow = monthlySheet.getLastRow();
@@ -329,7 +329,7 @@ function moveToSortingSheet(ss, row) {
 
   // FIXED: Add to END of sheet (oldest first, newest last)
   const lastRow = sortingSheet.getLastRow();
-  sortingSheet.getRange(lastRow + 1, 1, 1, row.length).setValues([row]);
+sortingSheet.getRange(lastRow + 1, 1, 1, 7).setValues([row.slice(0, 7)]);
 
   // Add checkboxes in columns H, I, J (8, 9, 10)
   addCheckboxesToSortingRow(sortingSheet, lastRow + 1);
