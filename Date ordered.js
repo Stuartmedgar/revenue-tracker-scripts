@@ -102,7 +102,7 @@ function moveToMonthlySheetFromSorting(ss, originalData) {
   // Process for student engagement transfer
   const studentData = {
     name: originalData[1], // Name column
-    sitting: originalData[3], // Sitting column
+    sitting: extractSittingDate(originalData[3]), // Extract date from full Item Name
     actualPrice: originalData[5], // Actual Price column
     course: paymentInfo.course
   };
@@ -157,7 +157,7 @@ function moveToMonthlySheet(ss, row) {
   // Process for student engagement transfer
   const studentData = {
     name: row[1], // Name column
-    sitting: row[3], // Sitting column
+    sitting: extractSittingDate(row[3]), // Extract date from full Item Name
     actualPrice: row[5], // Actual Price column
     course: paymentInfo.course
   };
@@ -218,7 +218,7 @@ function moveToMonthlySheetFromInvoice(ss, originalData) {
   // Process for student engagement transfer
   const studentData = {
     name: originalData[1], // Name column
-    sitting: originalData[3], // Sitting column
+    sitting: extractSittingDate(originalData[3]), // Extract date from full Item Name
     actualPrice: originalData[5], // Actual Price column (now equals full price)
     course: paymentInfo.course
   };

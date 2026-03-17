@@ -109,7 +109,7 @@ function addRevenueMatchingFormulas(revenueSheet, paymentSheetName, lastRow, inc
   // Add formulas to all data rows
   for (let row = 2; row <= lastRow; row++) {
     // Column O - Match formula (matches both name AND amount)
-    const matchFormula = `=IF(AND(B${row}<>"",F${row}<>""),IF(COUNTIFS(IMPORTRANGE("${PAYMENT_SPREADSHEET_ID}","${paymentSheetName}!H:H"),B${row},IMPORTRANGE("${PAYMENT_SPREADSHEET_ID}","${paymentSheetName}!S:S"),F${row})>0,"Match",""),"")`;
+    const matchFormula = `=IF(AND(B${row}<>"",F${row}<>""),IF(COUNTIFS(IMPORTRANGE("${PAYMENT_SPREADSHEET_ID}","${paymentSheetName}!H:H"),B${row},IMPORTRANGE("${PAYMENT_SPREADSHEET_ID}","${paymentSheetName}!S:S"),F${row})>=COUNTIFS(B$2:B${row},B${row},F$2:F${row},F${row}),"Match",""),"")`;
     revenueSheet.getRange(row, 15).setFormula(matchFormula);
 
     // Column J - Stripe fee formula (matches BOTH name AND amount)
@@ -146,7 +146,7 @@ function addPaymentMatchingFormulas(paymentSheet, revenueSheetName, lastRow, inc
   // Add formulas to all data rows (starting from row 15)
   for (let row = 15; row <= lastRow; row++) {
     // Column AL - Match formula
-    const matchFormula = `=IF(AND(H${row}<>"",S${row}<>""),IF(COUNTIFS(IMPORTRANGE("${REVENUE_SPREADSHEET_ID}","'${revenueSheetName}'!B:B"),H${row},IMPORTRANGE("${REVENUE_SPREADSHEET_ID}","'${revenueSheetName}'!F:F"),S${row})>0,"Match",""),"")`;
+    const matchFormula = `=IF(AND(H${row}<>"",S${row}<>""),IF(COUNTIFS(IMPORTRANGE("${REVENUE_SPREADSHEET_ID}","'${revenueSheetName}'!B:B"),H${row},IMPORTRANGE("${REVENUE_SPREADSHEET_ID}","'${revenueSheetName}'!F:F"),S${row})=0,"",IF(COUNTIFS(IMPORTRANGE("${REVENUE_SPREADSHEET_ID}","'${revenueSheetName}'!B:B"),H${row},IMPORTRANGE("${REVENUE_SPREADSHEET_ID}","'${revenueSheetName}'!F:F"),S${row})>=COUNTIFS(H$15:H${row},H${row},S$15:S${row},S${row}),"Match","Duplicate")),"")`;
     paymentSheet.getRange(row, 38).setFormula(matchFormula);
     
     // FME VALIDATION FORMULAS (if enabled)
@@ -281,6 +281,15 @@ function addPaymentConditionalFormattingWithSpecialRules(paymentSheet, lastRow, 
     .setRanges([dataRange])
     .build();
   rules.push(redRule);
+
+  // PURPLE rule - Duplicate payment (appears more times in Payment Rec than Revenue)
+const purpleRule = SpreadsheetApp.newConditionalFormatRule()
+  .whenFormulaSatisfied('=$AL15="Duplicate"')
+  .setBackground('#ce93d8')
+  .setBold(true)
+  .setRanges([dataRange])
+  .build();
+rules.push(purpleRule);
   
   // LIGHT BLUE rule - 0 in column S only (exam sitting changes)
   const lightBlueRule = SpreadsheetApp.newConditionalFormatRule()
@@ -848,5 +857,34 @@ function listAvailableSheets() {
     });
   } catch (error) {
     Logger.log(`Error accessing payment spreadsheet: ${error.toString()}`);
+  }
+}
+
+function debugFebruary2026() {
+  const monthName = 'February';
+  const year = 2026;
+  const revenueSheetName = `${monthName} ${year}`;
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const revenueSheet = ss.getSheetByName(revenueSheetName);
+  
+  const lastRow = revenueSheet.getLastRow();
+  for (let row = 2; row <= Math.min(5, lastRow); row++) {
+    const name = revenueSheet.getRange(row, 2).getValue();
+    const amount = revenueSheet.getRange(row, 6).getValue();
+    const matchCell = revenueSheet.getRange(row, 15).getValue();
+    const formula = revenueSheet.getRange(row, 15).getFormula();
+    Logger.log(`Row ${row}: Name="${name}" Amount=${amount} Match="${matchCell}"`);
+    Logger.log(`Formula: ${formula}`);
+  }
+}
+
+function checkFeb26Data() {
+  const paymentSS = SpreadsheetApp.openById("1vi9n0mTXxGTGAppecDk04krBqgqvGf4ZNTvVlhseyFY");
+  const sheet = paymentSS.getSheetByName("Feb26");
+  
+  for (let row = 15; row <= 20; row++) {
+    const name = sheet.getRange(row, 8).getValue();  // Column H
+    const amount = sheet.getRange(row, 19).getValue(); // Column S
+    Logger.log(`Row ${row}: Name="${name}" Amount=${amount}`);
   }
 }

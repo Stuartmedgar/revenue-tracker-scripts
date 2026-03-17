@@ -50,7 +50,7 @@ function meetsEngagementCriteria(actualPrice) {
   }
 
   // UPDATED: First instalment payments - added 350 for Platinum 2nd installment
-  if (price === 522 || price === 397 || price === 350 || price === 347 || price === 297) {
+  if (price === 522 || price === 397 ||  price === 347 || price === 297) {
     return true;
   }
 
@@ -214,10 +214,13 @@ function findFirstAvailableRow(sheet) {
     const cellValue = columnBData[i][0];
 
     // If we hit "Deferrals" heading, stop looking - we found where students should end
-    if (cellValue && cellValue.toString().toLowerCase().includes('deferral')) {
-      Logger.log(`Found "Deferrals" section at row ${rowIndex}, students should be added before this`);
-      break;
-    }
+    if (cellValue && (
+  cellValue.toString().toLowerCase().includes('deferral') ||
+  cellValue.toString().toLowerCase().includes('email')
+)) {
+  Logger.log(`Found section boundary "${cellValue}" at row ${rowIndex}, students should be added before this`);
+  break;
+}
 
     // If this row has a student name (non-empty), update last student row
     if (cellValue && cellValue.toString().trim() !== '') {
@@ -485,4 +488,33 @@ function transferAllEligibleStudentsToEngagement() {
   });
 
   Logger.log(`\n✅ COMPLETE: Attempted to transfer ${totalTransferred} students to engagement spreadsheet`);
+}
+
+function debugJune2026Students() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const allSheets = ss.getSheets();
+  const monthlySheets = allSheets.filter(sheet => isMonthlySheetName(sheet.getName()));
+
+  monthlySheets.forEach(sheet => {
+    const dataRange = sheet.getDataRange();
+    if (dataRange.getNumRows() <= 1) return;
+
+    const allData = dataRange.getValues();
+    const headers = allData[0];
+    const dataRows = allData.slice(1);
+
+    const nameCol = headers.indexOf('Name');
+    const sittingCol = headers.indexOf('Sitting');
+    const actualPriceCol = headers.indexOf('Actual Price');
+
+    dataRows.forEach(row => {
+      const sitting = row[sittingCol];
+      if (sitting && sitting.toString().trim() === 'June 2026') {
+        const name = row[nameCol];
+        const price = row[actualPriceCol];
+        const meets = meetsEngagementCriteria(price);
+        Logger.log(`${name} | £${price} | Meets criteria: ${meets}`);
+      }
+    });
+  });
 }

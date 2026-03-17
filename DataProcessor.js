@@ -231,17 +231,17 @@ function meetsMonthlySheetConditions(date, name, fullPrice, actualPrice) {
     return false;
   }
 
-  // UPDATED: Check if fullPrice is 1047, 822, 647, or 597
-  const validFullPrices = [1047, 822, 647, 597];
-  if (!validFullPrices.includes(Number(fullPrice))) {
-    return false;
-  }
+  // Added 997 for legacy Platinum backward compatibility
+const validFullPrices = [1047, 997, 822, 647, 597];
+if (!validFullPrices.includes(Math.round(Number(fullPrice)))) {
+  return false;
+}
 
-  // UPDATED: Check if actualPrice is valid - added 1047 and 350
-  const validActualPrices = [1047, 822, 647, 597, 522, 397, 350, 347, 300, 297];
-  if (!validActualPrices.includes(Number(actualPrice))) {
-    return false;
-  }
+// Added 997 for legacy Platinum full payment
+const validActualPrices = [1047, 997, 822, 647, 597, 522, 397, 350, 347, 300, 297];
+if (!validActualPrices.includes(Math.round(Number(actualPrice)))) {
+  return false;
+}
 
   return true;
 }
@@ -301,7 +301,7 @@ function moveToMonthlySheet(ss, row) {
   // Process for student engagement transfer
   const studentData = {
     name: row[1], // Name column
-    sitting: row[3], // Sitting column
+    sitting: extractSittingDate(row[3]), // Extract date from full Item Name
     actualPrice: row[5], // Actual Price column
     course: paymentInfo.course
   };

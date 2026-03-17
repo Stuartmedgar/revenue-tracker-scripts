@@ -145,7 +145,7 @@ function moveToMonthlySheetFromSorting(ss, originalData) {
   // Process for student engagement transfer
   const studentData = {
     name: originalData[1], // Name column
-    sitting: originalData[3], // Sitting column
+    sitting: extractSittingDate(originalData[3]), // Extract date from full Item Name
     actualPrice: originalData[5], // Actual Price column
     course: paymentInfo.course
   };
