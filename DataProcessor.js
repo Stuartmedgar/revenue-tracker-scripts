@@ -149,6 +149,9 @@ function shouldProcessRow(ss, row, rowIndex) {
 }
 
 function processIndividualRow(ss, dataEntrySheet, row, rowIndex) {
+  // Strip sitting date from full item name before routing anywhere
+  row[3] = extractSittingDate(row[3]);
+
   const [date, name, course, sitting, fullPrice, actualPrice, orderType] = row;
 
   // First check: Failed orders
@@ -174,6 +177,9 @@ function processIndividualRow(ss, dataEntrySheet, row, rowIndex) {
 }
 
 function processIndividualRowTestMode(ss, dataEntrySheet, row, rowIndex) {
+  // Strip sitting date from full item name before routing anywhere
+  row[3] = extractSittingDate(row[3]);
+
   const [date, name, course, sitting, fullPrice, actualPrice, orderType] = row;
 
   // First check: Failed orders
