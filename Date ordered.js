@@ -86,7 +86,7 @@ function moveToMonthlySheetFromSorting(ss, originalData) {
   const expectedIncome = calculateExpectedIncome(originalData[5], fmeFee, stripeFee);
 
   const completeRow = [
-    ...rowWithCourse,
+    ...rowWithCourse.slice(0, 7),
     fmeFee,
     stripeFee,
     '', // Actual Stripe Fee (empty)
@@ -141,7 +141,7 @@ function moveToMonthlySheet(ss, row) {
   const expectedIncome = calculateExpectedIncome(row[5], fmeFee, stripeFee);
 
   const completeRow = [
-    ...rowWithCourse,
+    ...rowWithCourse.slice(0, 7),
     fmeFee,
     stripeFee,
     '', // Actual Stripe Fee (empty)
@@ -202,7 +202,7 @@ function moveToMonthlySheetFromInvoice(ss, originalData) {
   const expectedIncome = calculateExpectedIncome(originalData[5], fmeFee, stripeFee);
 
   const completeRow = [
-    ...rowWithCourse,
+    ...rowWithCourse.slice(0, 7),
     fmeFee,
     stripeFee,
     '', // Actual Stripe Fee (empty)
