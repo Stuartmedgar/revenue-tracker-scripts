@@ -302,7 +302,6 @@ function moveToMonthlySheet(ss, row) {
 
   // FIXED: Add to END of sheet instead of row 2 (oldest first, newest last)
   const lastRow = monthlySheet.getLastRow();
-  Logger.log(`completeRow length: ${completeRow.length}, values: ${JSON.stringify(completeRow)}`);
   monthlySheet.getRange(lastRow + 1, 1, 1, completeRow.length).setValues([completeRow]);
 
   // Process for student engagement transfer
