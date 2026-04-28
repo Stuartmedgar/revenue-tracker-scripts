@@ -15,8 +15,10 @@ function extractSittingDate(fullItemName) {
   const parts = fullText.split(' - ');
   
   if (parts.length >= 2) {
-    // Take the last part (the date)
-    const sittingDate = parts[parts.length - 1].trim();
+    // Take the last part and extract just "Month Year"
+    const lastPart = parts[parts.length - 1].trim();
+    const words = lastPart.split(' ');
+    const sittingDate = words[0] + ' ' + words[1]; // e.g. "June 2026"
     Logger.log(`✅ Extracted sitting date: "${fullText}" → "${sittingDate}"`);
     return sittingDate;
   }
