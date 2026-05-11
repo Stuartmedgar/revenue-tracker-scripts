@@ -9,7 +9,7 @@ function getCourseFromPrice(fullPrice) {
   switch (price) {
     case 1047: return 'Platinum';
     case 997:  return 'Platinum';  // legacy pricing
-    case 822:  return 'Tuition/Revision Plus';
+    case 822:  return 'Revision+Tuition Fast Track';
     case 647:  return 'Revision';
     case 597:  return 'Tuition';
     default:   return '';

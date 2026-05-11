@@ -31,9 +31,9 @@ function detectPaymentPlan(fullPrice, actualPrice) {
 
   // Tuition/Revision Plus Course (822)
   if (full === 822) {
-    if (actual === 822)  return { isPaymentPlan: false, instalment: '',       course: 'Tuition/Revision Plus' };
-    if (actual === 522)  return { isPaymentPlan: true,  instalment: '1 of 2', course: 'Tuition/Revision Plus' };
-    if (actual === 300)  return { isPaymentPlan: true,  instalment: '2 of 2', course: 'Tuition/Revision Plus' };
+    if (actual === 822)  return { isPaymentPlan: false, instalment: '',       course: 'Revision+Tuition Fast Track' };
+    if (actual === 522)  return { isPaymentPlan: true,  instalment: '1 of 2', course: 'Revision+Tuition Fast Track' };
+    if (actual === 300)  return { isPaymentPlan: true,  instalment: '2 of 2', course: 'Revision+Tuition Fast Track' };
   }
 
   // Revision Course (647)

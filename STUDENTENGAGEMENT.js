@@ -67,7 +67,7 @@ function getCourseTypeFromPrice(actualPrice) {
 
   // Tuition/Revision Plus (822 full, 522 first instalment)
   if (price === 822 || price === 522) {
-    return 'Tuition/Revision Plus';
+    return 'Revision+Tuition Fast Track';
   }
 
   // Revision (647 full, 347 first instalment)
